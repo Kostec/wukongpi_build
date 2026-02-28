@@ -56,5 +56,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wukongpi-${{ matrix.release }}
-          path: ./dist/*
+          path: ./output/*
           retention-days: 90
