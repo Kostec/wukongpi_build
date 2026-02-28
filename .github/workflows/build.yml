@@ -35,9 +35,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.ccache
-          key: ccache-${{ matrix.release }}-${{ hashFiles('**/*') }}
+          key: ccache-${{ matrix.release }}-${{ hashFiles('compile.sh') }}
           restore-keys: |
             ccache-${{ matrix.release }}-
+            ccache-
 
       - name: Build OS image
         run: |
