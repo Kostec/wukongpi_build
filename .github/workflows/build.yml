@@ -1,0 +1,59 @@
+name: Build WukongPi OS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - adapt
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        release: [jammy, debian]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake python3 python3-pip jq aria2 ccache locales dialog systemd sudo \
+            psmisc acl uuid uuid-runtime curl gnupg pv qemu-utils kpartx nbdkit gawk \
+            software-properties-common git diffutils patchutils pkg-config libusb-1.0-0-dev \
+            zlib1g-dev libfdt-dev kmod binfmt-support qemu-user-static
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ matrix.release }}-${{ hashFiles('**/*') }}
+          restore-keys: |
+            ccache-${{ matrix.release }}-
+
+      - name: Build OS image
+        run: |
+          sudo ./compile.sh \
+            BOARD=wukongpi \
+            BRANCH=current \
+            RELEASE=${{ matrix.release }} \
+            BUILD_MINIMAL=no \
+            BUILD_DESKTOP=no \
+            BUILD_ONLY=default \
+            KERNEL_CONFIGURE=no \
+            COMPRESS_OUTPUTIMAGE=sha,gpg,img
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wukongpi-${{ matrix.release }}
+          path: ./dist/*
+          retention-days: 90
