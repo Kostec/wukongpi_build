@@ -15,4 +15,6 @@ cd build
 ./compile.sh
 ```
 or
+```
 ./compile.sh  BOARD=wukongpi BRANCH=current BUILD_MINIMAL=no BUILD_DESKTOP=no BUILD_ONLY=u-boot,kernel,armbian-config,armbian-zsh,plymouth-theme-armbian,armbian-firmware,armbian-bsp KERNEL_CONFIGURE=no
+```
