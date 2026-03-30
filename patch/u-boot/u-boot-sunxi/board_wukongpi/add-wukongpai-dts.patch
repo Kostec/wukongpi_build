@@ -167,7 +167,7 @@ index 00000000..6d2dd237
 +
 +&spi0 {
 +	/* Disable SPI NOR by default: it optional on Wukong Pi boards */
-+	status = "disabled";
++	status = "okay";
 +
 +	flash@0 {
 +		#address-cells = <1>;
@@ -176,6 +176,17 @@ index 00000000..6d2dd237
 +		reg = <0>;
 +		spi-max-frequency = <40000000>;
 +	};
++
++};
++
++&spi1 {
++    status = "okay";
++
++    spidev@0 {
++        compatible = "spidev";
++        reg = <0>;
++        spi-max-frequency = <50000000>;
++    };
 +};
 +
 +&uart0 {
