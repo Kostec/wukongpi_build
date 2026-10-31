@@ -88,7 +88,7 @@ install_distribution_specific() {
 
 # create_sources_list <release> <basedir>
 #
-# <release>: bullseye|bookworm|sid|focal|jammy|kinetic|lunar
+# <release>: bullseye|bookworm|trixie|sid|focal|jammy|kinetic|lunar
 # <basedir>: path to root directory
 #
 create_sources_list() {
@@ -113,7 +113,7 @@ create_sources_list() {
 			EOF
 			;;
 
-		bullseye | bookworm | trixie)
+		bullseye)
 			cat <<- EOF > "${basedir}"/etc/apt/sources.list
 				deb http://${DEBIAN_MIRROR} $release main contrib non-free
 				#deb-src http://${DEBIAN_MIRROR} $release main contrib non-free
@@ -126,6 +126,22 @@ create_sources_list() {
 
 				deb http://${DEBIAN_SECURTY} ${release}-security main contrib non-free
 				#deb-src http://${DEBIAN_SECURTY} ${release}-security main contrib non-free
+			EOF
+			;;
+
+		bookworm | trixie) # firmware moved to its own non-free-firmware component since bookworm
+			cat <<- EOF > "${basedir}"/etc/apt/sources.list
+				deb http://${DEBIAN_MIRROR} $release main contrib non-free non-free-firmware
+				#deb-src http://${DEBIAN_MIRROR} $release main contrib non-free non-free-firmware
+
+				deb http://${DEBIAN_MIRROR} ${release}-updates main contrib non-free non-free-firmware
+				#deb-src http://${DEBIAN_MIRROR} ${release}-updates main contrib non-free non-free-firmware
+
+				deb http://${DEBIAN_MIRROR} ${release}-backports main contrib non-free non-free-firmware
+				#deb-src http://${DEBIAN_MIRROR} ${release}-backports main contrib non-free non-free-firmware
+
+				deb http://${DEBIAN_SECURTY} ${release}-security main contrib non-free non-free-firmware
+				#deb-src http://${DEBIAN_SECURTY} ${release}-security main contrib non-free non-free-firmware
 			EOF
 			;;
 

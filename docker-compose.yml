@@ -1,0 +1,43 @@
+# Run ./compile.sh inside a Linux container (Docker Desktop on Windows/macOS, or plain Docker on Linux).
+#
+#   docker compose build
+#   docker compose run --rm build                      # interactive menu
+#   docker compose run --rm build BOARD=wukongpi BRANCH=current RELEASE=trixie \
+#       BUILD_MINIMAL=no BUILD_DESKTOP=no KERNEL_CONFIGURE=no
+#   docker compose run --rm build shell                # shell inside the build environment
+#
+# Images and .deb packages end up in ./output on the host.
+# The build itself runs from a copy of the sources on the armbian-src volume
+# (see docker/entrypoint.sh), so edits on the host are picked up on the next run.
+
+services:
+  build:
+    build:
+      context: docker
+    image: wukongpi-build:jammy
+    # loop devices, mount, binfmt_misc and mknod are needed to assemble the SD card image
+    privileged: true
+    # default bridge: DNS goes straight to the Docker Desktop resolver instead of
+    # the embedded one of a compose network, which drops more queries under load
+    network_mode: bridge
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/src:ro
+      # rootfs/kernel trees must live on a Linux filesystem: an NTFS bind mount
+      # has no symlinks, device nodes or ownership and is case-insensitive
+      - armbian-src:/root/armbian
+      - ./output:/root/armbian/output
+      - ./userpatches:/root/armbian/userpatches
+      - armbian-cache:/root/armbian/cache
+      - armbian-tmp:/root/armbian/.tmp
+      - armbian-ccache:/root/.ccache
+      # loop partitions (/dev/loopNpM) appear after the container starts; the script
+      # recreates them from here with mknod (CONTAINER_COMPAT in lib/functions/image/loop.sh)
+      - /dev:/tmp/dev:ro
+
+volumes:
+  armbian-src:
+  armbian-cache:
+  armbian-tmp:
+  armbian-ccache:

@@ -1,0 +1,4 @@
+# Check out files byte-for-byte, even with core.autocrlf=true on Windows:
+# scripts are executed by bash inside Linux (CRLF breaks them), and some
+# patches/bootloader configs intentionally contain CRLF.
+* -text

@@ -11,6 +11,7 @@ create_chroot() {
 	apt_mirror['buster']="$DEBIAN_MIRROR"
 	apt_mirror['bullseye']="$DEBIAN_MIRROR"
 	apt_mirror['bookworm']="$DEBIAN_MIRROR"
+	apt_mirror['trixie']="$DEBIAN_MIRROR"
 	apt_mirror['focal']="$UBUNTU_MIRROR"
 	apt_mirror['jammy']="$UBUNTU_MIRROR"
 	apt_mirror['kinetic']="$UBUNTU_MIRROR"
@@ -18,6 +19,7 @@ create_chroot() {
 	components['buster']='main,contrib'
 	components['bullseye']='main,contrib'
 	components['bookworm']='main,contrib'
+	components['trixie']='main,contrib'
 	components['sid']='main,contrib'
 	components['focal']='main,universe,multiverse'
 	components['jammy']='main,universe,multiverse'
@@ -28,7 +30,7 @@ create_chroot() {
 
 	# perhaps a temporally workaround
 	case $release in
-		bullseye | bookworm | sid | focal | jammy | kinetic | lunar)
+		bullseye | bookworm | trixie | sid | focal | jammy | kinetic | lunar)
 			includes=${includes}",perl-openssl-defaults,libnet-ssleay-perl"
 			;;
 	esac
@@ -99,7 +101,7 @@ create_chroot() {
 		-q -y --no-install-recommends debhelper devscripts"'
 
 	case $release in
-		bullseye | bookworm | sid | focal | hirsute )
+		bullseye | bookworm | trixie | sid | focal | hirsute )
 			eval 'LC_ALL=C LANG=C chroot "${target_dir}" \
 			/bin/bash -c "apt-get install python-is-python3"'
 			;;

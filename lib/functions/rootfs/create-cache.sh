@@ -97,6 +97,9 @@ create_rootfs_cache() {
 		# fancy progress bars
 		[[ -z $OUTPUT_DIALOG ]] && local apt_extra_progress="--show-progress -o DPKG::Progress-Fancy=1"
 
+		# host keyring can be too old for current Debian releases (Ubuntu Jammy has no bookworm/trixie keys)
+		[[ $DISTRIBUTION == Debian ]] && local debootstrap_keyring="--keyring=${SRC}/config/debian-archive-keyring.gpg"
+
 		# Ok so for eval+PIPESTATUS.
 		# Try this on your bash shell:
 		# ONEVAR="testing" eval 'bash -c "echo value once $ONEVAR && false && echo value twice $ONEVAR"' '| grep value'  '| grep value' ; echo ${PIPESTATUS[*]}
@@ -108,7 +111,7 @@ create_rootfs_cache() {
 		display_alert "Installing base system" "Stage 1/2" "info"
 		cd $SDCARD # this will prevent error sh: 0: getcwd() failed
 		eval 'debootstrap --variant=minbase --include=${DEBOOTSTRAP_LIST// /,} ${PACKAGE_LIST_EXCLUDE:+ --exclude=${PACKAGE_LIST_EXCLUDE// /,}} \
-			--arch=$ARCH --components=${DEBOOTSTRAP_COMPONENTS} $DEBOOTSTRAP_OPTION --foreign $RELEASE $SDCARD/ $apt_mirror' \
+			--arch=$ARCH --components=${DEBOOTSTRAP_COMPONENTS} $debootstrap_keyring $DEBOOTSTRAP_OPTION --foreign $RELEASE $SDCARD/ $apt_mirror' \
 			${PROGRESS_LOG_TO_FILE:+' | tee -a $DEST/${LOG_SUBPATH}/debootstrap.log'} \
 			${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" --progressbox "Debootstrap (stage 1/2)..." $TTY_Y $TTY_X'} \
 			${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'} ';EVALPIPE=(${PIPESTATUS[@]})'
@@ -118,7 +121,8 @@ create_rootfs_cache() {
 		cp /usr/bin/$QEMU_BINARY $SDCARD/usr/bin/
 
 		mkdir -p $SDCARD/usr/share/keyrings/
-		cp /usr/share/keyrings/*-archive-keyring.gpg $SDCARD/usr/share/keyrings/
+		# don't replace keyrings installed by debootstrap with possibly older host ones
+		cp -n /usr/share/keyrings/*-archive-keyring.gpg $SDCARD/usr/share/keyrings/
 
 		display_alert "Installing base system" "Stage 2/2" "info"
 		eval 'LC_ALL=C LANG=C chroot $SDCARD /bin/bash -e -c "/debootstrap/debootstrap --second-stage"' \

@@ -101,6 +101,14 @@ download_and_verify() {
 			return $rc
 		fi
 
+		# some mirrors answer a missing file with 200 and an HTML page; treat it as `not found`
+		if ! grep -q 'BEGIN PGP SIGNATURE' "${localdir}/${filename}.asc" &&
+			! grep -qE '^[0-9a-f]{32}\b' "${localdir}/${filename}.asc"; then
+			display_alert "Not a signature file, skipping" "${filename}.asc" "wrn"
+			rm -f "${localdir}/${filename}.asc"
+			return 3
+		fi
+
 		[[ ${USE_TORRENT} == "yes" ]] &&
 			local torrent="$(get_urls "${catalog}" "${filename}.torrent")"
 	fi
