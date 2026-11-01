@@ -100,6 +100,9 @@ create_rootfs_cache() {
 		# host keyring can be too old for current Debian releases (Ubuntu Jammy has no bookworm/trixie keys)
 		[[ $DISTRIBUTION == Debian ]] && local debootstrap_keyring="--keyring=${SRC}/config/debian-archive-keyring.gpg"
 
+		# host debootstrap can be too old to know the release (Ubuntu Jammy has no noble script); all Ubuntu releases use gutsy
+		[[ $DISTRIBUTION == Ubuntu && ! -e /usr/share/debootstrap/scripts/$RELEASE ]] && local debootstrap_script=/usr/share/debootstrap/scripts/gutsy
+
 		# Ok so for eval+PIPESTATUS.
 		# Try this on your bash shell:
 		# ONEVAR="testing" eval 'bash -c "echo value once $ONEVAR && false && echo value twice $ONEVAR"' '| grep value'  '| grep value' ; echo ${PIPESTATUS[*]}
@@ -111,7 +114,7 @@ create_rootfs_cache() {
 		display_alert "Installing base system" "Stage 1/2" "info"
 		cd $SDCARD # this will prevent error sh: 0: getcwd() failed
 		eval 'debootstrap --variant=minbase --include=${DEBOOTSTRAP_LIST// /,} ${PACKAGE_LIST_EXCLUDE:+ --exclude=${PACKAGE_LIST_EXCLUDE// /,}} \
-			--arch=$ARCH --components=${DEBOOTSTRAP_COMPONENTS} $debootstrap_keyring $DEBOOTSTRAP_OPTION --foreign $RELEASE $SDCARD/ $apt_mirror' \
+			--arch=$ARCH --components=${DEBOOTSTRAP_COMPONENTS} $debootstrap_keyring $DEBOOTSTRAP_OPTION --foreign $RELEASE $SDCARD/ $apt_mirror $debootstrap_script' \
 			${PROGRESS_LOG_TO_FILE:+' | tee -a $DEST/${LOG_SUBPATH}/debootstrap.log'} \
 			${OUTPUT_DIALOG:+' | dialog --backtitle "$backtitle" --progressbox "Debootstrap (stage 1/2)..." $TTY_Y $TTY_X'} \
 			${OUTPUT_VERYSILENT:+' >/dev/null 2>/dev/null'} ';EVALPIPE=(${PIPESTATUS[@]})'
@@ -228,9 +231,11 @@ create_rootfs_cache() {
 		fi
 
 		# stage: check md5 sum of installed packages. Just in case.
+		# base-files from the Armbian repo is rebranded (/etc/os-release, /etc/issue...) but keeps the upstream md5sums
 		display_alert "Checking MD5 sum of installed packages" "debsums" "info"
-		chroot $SDCARD /bin/bash -e -c "debsums -s"
-		[[ $? -ne 0 ]] && exit_with_error "MD5 sums check of installed packages failed"
+		local debsums_failed
+		debsums_failed=$(chroot $SDCARD /bin/bash -c "debsums -s 2>&1" | grep -v "(from base-files package)$")
+		[[ -n $debsums_failed ]] && echo "$debsums_failed" && exit_with_error "MD5 sums check of installed packages failed"
 
 		# Remove packages from packages.uninstall
 

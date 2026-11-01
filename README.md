@@ -21,7 +21,7 @@ or
 
 ### Release
 
-Select the userspace with `RELEASE=`: `jammy`, `bullseye`, `bookworm` or `trixie` (Debian 13).
+Select the userspace with `RELEASE=`: `jammy`, `noble` (Ubuntu 24.04), `bullseye`, `bookworm` or `trixie` (Debian 13).
 In the interactive menu `bookworm` is shown only with `EXPERT=yes`.
 
 ```

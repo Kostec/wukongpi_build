@@ -16,6 +16,7 @@ create_chroot() {
 	apt_mirror['jammy']="$UBUNTU_MIRROR"
 	apt_mirror['kinetic']="$UBUNTU_MIRROR"
 	apt_mirror['lunar']="$UBUNTU_MIRROR"
+	apt_mirror['noble']="$UBUNTU_MIRROR"
 	components['buster']='main,contrib'
 	components['bullseye']='main,contrib'
 	components['bookworm']='main,contrib'
@@ -25,12 +26,13 @@ create_chroot() {
 	components['jammy']='main,universe,multiverse'
 	components['lunar']='main,universe,multiverse'
 	components['kinetic']='main,universe,multiverse'
+	components['noble']='main,universe,multiverse'
 	display_alert "Creating build chroot" "$release/$arch" "info"
 	local includes="ccache,locales,git,ca-certificates,libfile-fcntllock-perl,rsync,python3,distcc,apt-utils"
 
 	# perhaps a temporally workaround
 	case $release in
-		bullseye | bookworm | trixie | sid | focal | jammy | kinetic | lunar)
+		bullseye | bookworm | trixie | sid | focal | jammy | kinetic | lunar | noble)
 			includes=${includes}",perl-openssl-defaults,libnet-ssleay-perl"
 			;;
 	esac
@@ -128,6 +130,7 @@ chroot_prepare_distccd() {
 	gcc_version['jammy']='12'
 	gcc_version['kinetic']='12'
 	gcc_version['lunar']='12'
+	gcc_version['noble']='13'
 	gcc_type['armhf']='arm-linux-gnueabihf-'
 	gcc_type['arm64']='aarch64-linux-gnu-'
 	rm -f "${dest}"/cmdlist
@@ -161,7 +164,7 @@ chroot_build_packages() {
 		target_arch="${ARCH}"
 	else
 		# only make packages for recent releases. There are no changes on older
-		target_release="bullseye bookworm focal jammy lunar sid"
+		target_release="bullseye bookworm focal jammy lunar noble sid"
 		target_arch="armhf arm64 amd64"
 	fi
 

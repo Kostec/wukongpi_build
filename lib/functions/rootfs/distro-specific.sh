@@ -13,7 +13,7 @@ install_distribution_specific() {
 
 	case $RELEASE in
 
-		focal | jammy | kinetic | lunar )
+		focal | jammy | kinetic | lunar | noble )
 
 			# by using default lz4 initrd compression leads to corruption, go back to proven method
 			sed -i "s/^COMPRESS=.*/COMPRESS=gzip/" "${SDCARD}"/etc/initramfs-tools/initramfs.conf
@@ -88,7 +88,7 @@ install_distribution_specific() {
 
 # create_sources_list <release> <basedir>
 #
-# <release>: bullseye|bookworm|trixie|sid|focal|jammy|kinetic|lunar
+# <release>: bullseye|bookworm|trixie|sid|focal|jammy|kinetic|lunar|noble
 # <basedir>: path to root directory
 #
 create_sources_list() {
@@ -152,7 +152,7 @@ create_sources_list() {
 			EOF
 			;;
 
-		focal | jammy | kinetic | lunar)
+		focal | jammy | kinetic | lunar | noble)
 			cat <<- EOF > "${basedir}"/etc/apt/sources.list
 				deb http://${UBUNTU_MIRROR} $release main restricted universe multiverse
 				#deb-src http://${UBUNTU_MIRROR} $release main restricted universe multiverse
