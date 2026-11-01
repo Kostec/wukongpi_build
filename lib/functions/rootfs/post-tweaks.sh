@@ -4,7 +4,10 @@ post_debootstrap_tweaks() {
 	# remove service start blockers and QEMU binary
 	rm -f "${SDCARD}"/sbin/initctl "${SDCARD}"/sbin/start-stop-daemon
 	chroot "${SDCARD}" /bin/bash -c "dpkg-divert --quiet --local --rename --remove /sbin/initctl"
-	chroot "${SDCARD}" /bin/bash -c "dpkg-divert --quiet --local --rename --remove /sbin/start-stop-daemon"
+	# same path as diverted in create_rootfs_cache()
+	local ssd_path
+	ssd_path=$(chroot "${SDCARD}" /bin/bash -c "dpkg -L dpkg | grep -m1 'bin/start-stop-daemon$'")
+	chroot "${SDCARD}" /bin/bash -c "dpkg-divert --quiet --local --rename --remove ${ssd_path}"
 	rm -f "${SDCARD}"/usr/sbin/policy-rc.d "${SDCARD}/usr/bin/${QEMU_BINARY}"
 
 	call_extension_method "post_post_debootstrap_tweaks" "config_post_debootstrap_tweaks" << 'POST_POST_DEBOOTSTRAP_TWEAKS'

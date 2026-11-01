@@ -141,7 +141,11 @@ create_rootfs_cache() {
 		# policy-rc.d script prevents starting or reloading services during image creation
 		printf '#!/bin/sh\nexit 101' > $SDCARD/usr/sbin/policy-rc.d
 		LC_ALL=C LANG=C chroot $SDCARD /bin/bash -c "dpkg-divert --quiet --local --rename --add /sbin/initctl" &> /dev/null
-		LC_ALL=C LANG=C chroot $SDCARD /bin/bash -c "dpkg-divert --quiet --local --rename --add /sbin/start-stop-daemon" &> /dev/null
+		# divert the path dpkg owns (/usr/sbin since trixie), otherwise the fake below overwrites
+		# the packaged binary through the /sbin symlink and debsums reports it as changed
+		local ssd_path
+		ssd_path=$(chroot $SDCARD /bin/bash -c "dpkg -L dpkg | grep -m1 'bin/start-stop-daemon$'")
+		LC_ALL=C LANG=C chroot $SDCARD /bin/bash -c "dpkg-divert --quiet --local --rename --add ${ssd_path}" &> /dev/null
 		printf '#!/bin/sh\necho "Warning: Fake start-stop-daemon called, doing nothing"' > $SDCARD/sbin/start-stop-daemon
 		printf '#!/bin/sh\necho "Warning: Fake initctl called, doing nothing"' > $SDCARD/sbin/initctl
 		chmod 755 $SDCARD/usr/sbin/policy-rc.d
