@@ -121,11 +121,12 @@ create_sources_list() {
 				deb http://${DEBIAN_MIRROR} ${release}-updates main contrib non-free
 				#deb-src http://${DEBIAN_MIRROR} ${release}-updates main contrib non-free
 
-				deb http://${DEBIAN_MIRROR} ${release}-backports main contrib non-free
-				#deb-src http://${DEBIAN_MIRROR} ${release}-backports main contrib non-free
+				# bullseye LTS has ended: backports and security packages are only on archive.debian.org now
+				deb http://archive.debian.org/debian ${release}-backports main contrib non-free
+				#deb-src http://archive.debian.org/debian ${release}-backports main contrib non-free
 
-				deb http://${DEBIAN_SECURTY} ${release}-security main contrib non-free
-				#deb-src http://${DEBIAN_SECURTY} ${release}-security main contrib non-free
+				deb http://archive.debian.org/debian-security ${release}-security main contrib non-free
+				#deb-src http://archive.debian.org/debian-security ${release}-security main contrib non-free
 			EOF
 			;;
 
