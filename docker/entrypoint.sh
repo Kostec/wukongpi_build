@@ -17,6 +17,18 @@ dnsmasq --listen-address=127.0.0.1 --bind-interfaces --no-resolv --server="${ups
 	--cache-size=10000 --min-cache-ttl=3600 --no-negcache --user=root
 printf 'nameserver 127.0.0.1\noptions attempts:3 timeout:2\n' > /etc/resolv.conf
 
+# The armhf rootfs is built through qemu-arm in binfmt_misc. Docker Desktop registers an ARM
+# emulator in its VM, a plain Linux host (GitHub runner) usually doesn't, and the framework
+# can't do it: it uses update-binfmts, but qemu-user-static 8.x only ships /usr/lib/binfmt.d
+# entries. The entry has the F flag, so the kernel keeps the interpreter open and it works
+# from any container; the registration is host-wide (binfmt_misc is not namespaced).
+if ! arch-test armhf > /dev/null 2>&1; then
+	echo "Registering qemu-arm in binfmt_misc"
+	mountpoint -q /proc/sys/fs/binfmt_misc || mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
+	cat /usr/lib/binfmt.d/qemu-arm.conf > /proc/sys/fs/binfmt_misc/register
+	arch-test armhf
+fi
+
 git config --global --add safe.directory '*'
 
 # output/, cache/ and .tmp are mount points inside ${SRC}, so it is never empty
