@@ -45,6 +45,10 @@ docker compose run --rm build BOARD=wukongpi BRANCH=current RELEASE=trixie BUILD
 - armbian/build, downloaded sources and the rootfs cache are kept in the Docker volumes
   `armbian-build`, `armbian-build-cache` and `armbian-build-tmp` (`docker compose down -v` deletes them).
 - Another armbian/build version for a single run: `ARMBIAN_REF=main docker compose run --rm build ...`
+- The kernel sources come from a shallow git tarball on ghcr.io (`KERNEL_GIT=shallow` in
+  `docker-compose.yml`). If its download keeps failing with `stream error: ... PROTOCOL_ERROR`,
+  fetch it with resume and start the build again:
+  `docker compose run --rm --entrypoint bash build /src/docker/fetch-kernel-git.sh 6.18`
 - The repository is checked out with LF line endings regardless of `core.autocrlf` (see `.gitattributes`).
 
 ### Updating Armbian

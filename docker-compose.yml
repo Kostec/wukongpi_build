@@ -26,6 +26,8 @@ services:
     tty: true
     environment:
       - ARMBIAN_REF
+      # ~300 MB kernel git tarball per kernel version instead of the ~5 GB full one
+      - KERNEL_GIT=${KERNEL_GIT:-shallow}
     volumes:
       - .:/src:ro
       # the framework, rootfs and kernel trees must live on a Linux filesystem: an NTFS

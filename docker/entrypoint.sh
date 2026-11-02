@@ -24,7 +24,9 @@ git config --global --add safe.directory '*'
 # `git clean` without -x leaves them alone.
 echo "Checking out armbian/build ${ARMBIAN_REF}..."
 [[ -d "${SRC}/.git" ]] || git init -q "${SRC}"
-git -C "${SRC}" fetch --depth=1 --force "${ARMBIAN_REPO}" "${ARMBIAN_REF}"
+# the framework reads the remote URL for the build metadata
+git -C "${SRC}" remote add origin "${ARMBIAN_REPO}" 2> /dev/null || git -C "${SRC}" remote set-url origin "${ARMBIAN_REPO}"
+git -C "${SRC}" fetch --depth=1 --force origin "${ARMBIAN_REF}"
 git -C "${SRC}" checkout -q --force --detach FETCH_HEAD
 git -C "${SRC}" clean -q -d --force
 git -C "${SRC}" log -1 --format='armbian/build %h (%cs) %s'
