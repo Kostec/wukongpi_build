@@ -1,51 +1,64 @@
 # wukongpi_build
 
-### Basic requirements
+Armbian images for the WuKong Pi (Allwinner H2+/H3, 256/512 MB RAM, XR819 Wi-Fi).
 
-- x86_64 or aarch64 machine with at least 2GB of memory and ~35GB of disk space for a virtual machine, container or bare metal installation
-- Ubuntu Jammy 22.04.x amd64 or aarch64 for native building 
-- Superuser rights (configured sudo or root access).
+This repository only holds the board support. The build framework is
+[armbian/build](https://github.com/armbian/build) at the ref from [`ARMBIAN_REF`](ARMBIAN_REF);
+it is checked out at build time and the files from `userpatches/` are put next to it.
 
-### Simply start with the build script
+```
+ARMBIAN_REF                                        armbian/build release branch, tag or commit
+userpatches/config/boards/wukongpi.csc             board config
+userpatches/kernel/sunxi-dt_32/*.dts               kernel device tree, used for every kernel branch
+userpatches/u-boot/v2026.07-sunxi/board_wukongpi/  U-Boot defconfig and device tree
+docker/, docker-compose.yml                        build container (also used by CI)
+```
 
-```bash
-apt-get -y install git
-git clone https://github.com/Timfu2019/wukongpi_build.git
-cd build
-./compile.sh
-```
-or
-```
-./compile.sh  BOARD=wukongpi BRANCH=current BUILD_MINIMAL=no BUILD_DESKTOP=no BUILD_ONLY=u-boot,kernel,armbian-config,armbian-zsh,plymouth-theme-armbian,armbian-firmware,armbian-bsp KERNEL_CONFIGURE=no
-```
+### Kernel branch
+
+Select the kernel with `BRANCH=` (versions for armbian/build v26.08):
+
+| BRANCH    | Kernel   |
+|-----------|----------|
+| `legacy`  | 6.12 LTS |
+| `current` | 6.18 LTS |
+| `edge`    | 7.1      |
 
 ### Release
 
-Select the userspace with `RELEASE=`: `jammy`, `noble` (Ubuntu 24.04), `bullseye`, `bookworm` or `trixie` (Debian 13).
-In the interactive menu `bookworm` is shown only with `EXPERT=yes`.
+Select the userspace with `RELEASE=`: `trixie` (Debian 13), `noble` (Ubuntu 24.04) or
+`resolute` (Ubuntu 26.04). `bookworm`, `jammy`, `forky` and `sid` are community supported
+by Armbian and may break.
 
-```
-./compile.sh BOARD=wukongpi BRANCH=current RELEASE=trixie BUILD_MINIMAL=no BUILD_DESKTOP=no KERNEL_CONFIGURE=no
-```
+### Building (Docker)
 
-### Building on Windows (Docker)
-
-Requirements: Docker Desktop with the WSL 2 backend, switched to **Linux containers**
-(tray icon → "Switch to Linux containers...").
+Requirements: Docker (on Windows: Docker Desktop with the WSL 2 backend, switched to
+**Linux containers**), ~40 GB of disk space.
 
 ```
 docker compose build
 docker compose run --rm build BOARD=wukongpi BRANCH=current RELEASE=trixie BUILD_MINIMAL=no BUILD_DESKTOP=no KERNEL_CONFIGURE=no
 ```
 
-- `docker compose run --rm build` without arguments opens the interactive menu.
 - `docker compose run --rm build shell` gives a shell in the build environment.
-- Results are written to `output/`, `userpatches/` is used as is. The build runs from a copy of the
-  sources on the `armbian-src` volume, synced on every start: a Windows checkout turns git symlinks
-  into plain text files, and the copy gets them back from the git index (`docker/entrypoint.sh`).
-- Downloaded sources, the rootfs cache and ccache are kept in the Docker volumes `armbian-cache`,
-  `armbian-tmp` and `armbian-ccache` (`docker compose down -v` deletes them).
+- Results are written to `output/` (the image is in `output/images/`).
+- armbian/build, downloaded sources and the rootfs cache are kept in the Docker volumes
+  `armbian-build`, `armbian-build-cache` and `armbian-build-tmp` (`docker compose down -v` deletes them).
+- Another armbian/build version for a single run: `ARMBIAN_REF=main docker compose run --rm build ...`
 - The repository is checked out with LF line endings regardless of `core.autocrlf` (see `.gitattributes`).
-  If a build fails with `$'\r': command not found`, re-clone the repository.
-- For faster builds clone the repository inside the WSL 2 filesystem (e.g. `\\wsl$\Ubuntu\home\...`)
-  and run the same commands there.
+
+### Updating Armbian
+
+1. Change `ARMBIAN_REF` to the new release branch (`git ls-remote --heads https://github.com/armbian/build 'v*'`).
+2. If the new release moved sunxi U-Boot to another version, rename
+   `userpatches/u-boot/v2026.07-sunxi` after `BOOTPATCHDIR` in
+   `config/sources/families/include/sunxi_common.inc` and check that the patch still applies.
+3. Build and boot-test the image.
+
+### Updating an installed system
+
+Kernel packages in the Armbian apt repository are built without the WuKong Pi device tree,
+so the board would not boot after `apt upgrade` installed them. The image therefore has its
+Armbian packages (kernel, DTB, U-Boot, BSP, firmware) on hold (`BSPFREEZE="yes"` in the board
+config, see `apt-mark showhold`); Debian/Ubuntu packages are upgraded as usual. Update the kernel
+by flashing a new image or by installing the `.deb` packages from `output/debs/` with `dpkg -i`.

@@ -1,6 +1,2 @@
-# build results and generated user configuration
+# build results
 /output/
-/userpatches/
-# download/build caches (empty mount points when building in Docker)
-/cache/
-/.tmp/

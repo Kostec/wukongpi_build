@@ -5,16 +5,16 @@ on:
   push:
     branches:
       - main
-      - adapt
+      - armbian-upstream
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     strategy:
       fail-fast: false
       matrix:
-        release: [jammy, noble, bullseye, trixie]
+        release: [noble, resolute, trixie]
 
     steps:
       - name: Checkout repository
@@ -22,39 +22,22 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential cmake python3 python3-pip jq aria2 ccache locales dialog systemd sudo \
-            psmisc acl uuid uuid-runtime curl gnupg pv qemu-utils kpartx nbdkit gawk \
-            software-properties-common git diffutils patchutils pkg-config libusb-1.0-0-dev \
-            zlib1g-dev libfdt-dev kmod binfmt-support qemu-user-static
-
-      - name: Cache ccache
-        uses: actions/cache@v4
-        with:
-          path: ~/.ccache
-          key: ccache-${{ matrix.release }}-${{ hashFiles('compile.sh') }}
-          restore-keys: |
-            ccache-${{ matrix.release }}-
-            ccache-
-
       - name: Build OS image
+        # same container and entrypoint as a local build, see docker-compose.yml
         run: |
-          sudo ./compile.sh \
+          docker compose build
+          docker compose run --rm -T build \
             BOARD=wukongpi \
             BRANCH=current \
             RELEASE=${{ matrix.release }} \
             BUILD_MINIMAL=no \
             BUILD_DESKTOP=no \
-            BUILD_ONLY=default \
             KERNEL_CONFIGURE=no \
-            COMPRESS_OUTPUTIMAGE=sha,gpg,img
+            COMPRESS_OUTPUTIMAGE=sha,img
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: wukongpi-${{ matrix.release }}
-          path: ./output/*
+          path: ./output/images/*
           retention-days: 90

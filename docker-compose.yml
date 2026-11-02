@@ -1,43 +1,44 @@
-# Run ./compile.sh inside a Linux container (Docker Desktop on Windows/macOS, or plain Docker on Linux).
+# Run armbian/build's ./compile.sh inside a Linux container (Docker Desktop on Windows/macOS,
+# or plain Docker on Linux) with the WuKong Pi board support from userpatches/.
 #
 #   docker compose build
-#   docker compose run --rm build                      # interactive menu
 #   docker compose run --rm build BOARD=wukongpi BRANCH=current RELEASE=trixie \
 #       BUILD_MINIMAL=no BUILD_DESKTOP=no KERNEL_CONFIGURE=no
 #   docker compose run --rm build shell                # shell inside the build environment
 #
 # Images and .deb packages end up in ./output on the host.
-# The build itself runs from a copy of the sources on the armbian-src volume
-# (see docker/entrypoint.sh), so edits on the host are picked up on the next run.
+# armbian/build is checked out at the ref from ARMBIAN_REF on every start (override with
+# ARMBIAN_REF=... in the environment), see docker/entrypoint.sh.
 
 services:
   build:
     build:
       context: docker
-    image: wukongpi-build:jammy
+    image: wukongpi-build:noble
     # loop devices, mount, binfmt_misc and mknod are needed to assemble the SD card image
     privileged: true
+    security_opt:
+      - apparmor:unconfined
     # default bridge: DNS goes straight to the Docker Desktop resolver instead of
     # the embedded one of a compose network, which drops more queries under load
     network_mode: bridge
     stdin_open: true
     tty: true
+    environment:
+      - ARMBIAN_REF
     volumes:
       - .:/src:ro
-      # rootfs/kernel trees must live on a Linux filesystem: an NTFS bind mount
-      # has no symlinks, device nodes or ownership and is case-insensitive
-      - armbian-src:/root/armbian
+      # the framework, rootfs and kernel trees must live on a Linux filesystem: an NTFS
+      # bind mount has no symlinks, device nodes or ownership and is case-insensitive
+      - armbian-build:/root/armbian
       - ./output:/root/armbian/output
-      - ./userpatches:/root/armbian/userpatches
-      - armbian-cache:/root/armbian/cache
-      - armbian-tmp:/root/armbian/.tmp
-      - armbian-ccache:/root/.ccache
-      # loop partitions (/dev/loopNpM) appear after the container starts; the script
-      # recreates them from here with mknod (CONTAINER_COMPAT in lib/functions/image/loop.sh)
+      - armbian-build-cache:/root/armbian/cache
+      - armbian-build-tmp:/root/armbian/.tmp
+      # loop partitions (/dev/loopNpM) appear after the container starts; the framework
+      # recreates them from here with mknod (CONTAINER_COMPAT)
       - /dev:/tmp/dev:ro
 
 volumes:
-  armbian-src:
-  armbian-cache:
-  armbian-tmp:
-  armbian-ccache:
+  armbian-build:
+  armbian-build-cache:
+  armbian-build-tmp:
