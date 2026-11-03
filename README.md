@@ -11,6 +11,7 @@ ARMBIAN_REF                                        armbian/build release branch,
 userpatches/config/boards/wukongpi.csc             board config
 userpatches/kernel/sunxi-dt_32/*.dts               kernel device tree, used for every kernel branch
 userpatches/u-boot/v2026.07-sunxi/board_wukongpi/  U-Boot defconfig and device tree
+userpatches/bsp/armbian-firstlogin                 first login from armbian/build main (see the board config)
 docker/, docker-compose.yml                        build container (also used by CI)
 ```
 
@@ -57,7 +58,9 @@ docker compose run --rm build BOARD=wukongpi BRANCH=current RELEASE=trixie BUILD
 2. If the new release moved sunxi U-Boot to another version, rename
    `userpatches/u-boot/v2026.07-sunxi` after `BOOTPATCHDIR` in
    `config/sources/families/include/sunxi_common.inc` and check that the patch still applies.
-3. Build and boot-test the image.
+3. Check the hooks in `userpatches/config/boards/wukongpi.csc`: the `armbian-firstlogin` backport
+   is not needed from v26.11 on.
+4. Build and boot-test the image.
 
 ### Updating an installed system
 
